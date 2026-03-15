@@ -47,5 +47,24 @@
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
     }
   </script>
+  <script>
+  // This function forces the browser to keep the GPS "pipe" open
+  function wakeUpGPS() {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          console.log("GPS data flowing: ", position.coords.latitude);
+        },
+        (error) => {
+          console.log("GPS Waiting: ", error.message);
+        },
+        { enableHighAccuracy: true, maximumAge: 0 }
+      );
+    }
+  }
+
+  // Run it as soon as the page loads
+  window.onload = wakeUpGPS;
+</script>
 </body>
 </html>
