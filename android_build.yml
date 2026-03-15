@@ -1,5 +1,5 @@
 name: Build Android APK
-on: [push, workflow_dispatch] # Runs on every push or manual trigger
+on: [push, workflow_dispatch]
 
 jobs:
   build:
@@ -11,22 +11,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - name: Install Cordova
-        run: npm install -g cordova
-
-      - name: Create App Wrapper
-        run: |
-          cordova create myApp com.udspl.portal "UDS Portal"
-          cd myApp
-          cordova platform add android
-          
-          # Replace the default index with your redirect
-          echo '<script>window.location.href="https://udsplkol.github.io/udspl/fse.html";</script>' > www/index.html
-          
-          # Add GPS Plugin
-          cordova plugin add cordova-plugin-geolocation
+          node-version: 24 # Updated to stop deprecation warnings
 
       - name: Setup Java
         uses: actions/setup-java@v3
@@ -34,14 +19,54 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Create App Wrapper
+        run: |
+          cordova create myApp com.udspl.portal "UDS Field"
+          cd myApp
+          cordova platform add android
+          
+          # Add Geolocation plugin
+          cordova plugin add cordova-plugin-geolocation
+          
+          # Force GPS Permissions into the Android System Manifest
+          sed -i '/<intent-filter>/i <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /><uses-feature android:name="android.hardware.location.gps" />' platforms/android/app/src/main/AndroidManifest.xml
+          
+          # This creates a 'Bridge' page. It waits for the phone to be ready, 
+          # triggers the GPS popup, THEN redirects to your site.
+          echo "<html>
+          <head>
+            <script type='text/javascript' src='cordova.js'></script>
+            <script>
+              document.addEventListener('deviceready', function() {
+                // Trigger the native Android location prompt
+                navigator.geolocation.getCurrentPosition(function() {
+                  window.location.href='https://udsplkol.github.io/udspl/fse.html';
+                }, function() {
+                  // Redirect even if they say no, so the app still opens
+                  window.location.href='https://udsplkol.github.io/udspl/fse.html';
+                }, { enableHighAccuracy: true });
+              }, false);
+            </script>
+          </head>
+          <body style='background:#000; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;'>
+            <div style='text-align:center;'>
+              <img src='https://i.ibb.co/wfJCVkS/UDS-NEW-LOGO-copy-1-1.png' style='width:100px;'><br>
+              <h3>Initializing UDS...</h3>
+            </div>
+          </body>
+          </html>" > www/index.html
+
       - name: Build APK
         run: |
           cd myApp
-          cordova build android --debug
+          yes | sdkmanager --licenses || true
+          cordova build android --debug --device
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: uds-portal-apk
           path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
- 
