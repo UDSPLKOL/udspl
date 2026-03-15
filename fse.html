@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0057FF">
   <meta name="description" content="UDS Field Service Application">
-  <meta name="permissions" content="android.permission.ACCESS_FINE_LOCATION,android.permission.ACCESS_COARSE_LOCATION">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="https://i.ibb.co/wfJCVkS/UDS-NEW-LOGO-copy-1-1.png">
   <link rel="apple-touch-icon" href="https://i.ibb.co/wfJCVkS/UDS-NEW-LOGO-copy-1-1.png">
@@ -38,7 +37,10 @@
 </head>
 <body>
   <div class="app-container">
-    <iframe src="https://script.google.com/macros/s/AKfycby2QwHU2GFtc5ImVUyvF0jmOCaMQlVnKNG656SPhDeeijUZ89IbiIYNLRSUJxd6duQSTA/exec"></iframe>
+    <iframe 
+      src="https://script.google.com/macros/s/AKfycby2QwHU2GFtc5ImVUyvF0jmOCaMQlVnKNG656SPhDeeijUZ89IbiIYNLRSUJxd6duQSTA/exec" 
+      allow="geolocation">
+    </iframe>
   </div>
   <script>
     if ('serviceWorker' in navigator) {
