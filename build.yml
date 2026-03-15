@@ -44,3 +44,4 @@ jobs:
         with:
           name: uds-portal-apk
           path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+ 
