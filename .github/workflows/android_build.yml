@@ -1,0 +1,79 @@
+name: Build Android APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Create App Wrapper
+        run: |
+          cordova create myApp com.udspl.portal "UDS Field"
+          cd myApp
+          cordova platform add android
+          
+          # Add Geolocation plugin
+          cordova plugin add cordova-plugin-geolocation
+          
+          # Inject Permissions into Android Manifest
+          sed -i '/<intent-filter>/i <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /><uses-feature android:name="android.hardware.location.gps" />' platforms/android/app/src/main/AndroidManifest.xml
+          
+          # The Bridge HTML that handles the Back Button Fix
+          echo "<html>
+          <head>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <script type='text/javascript' src='cordova.js'></script>
+            <script>
+              document.addEventListener('deviceready', function() {
+                
+                // --- BACK BUTTON FIX ---
+                document.addEventListener('backbutton', function(e) {
+                   e.preventDefault();
+                   window.history.back();
+                }, false);
+
+                // --- GPS & REDIRECT ---
+                navigator.geolocation.getCurrentPosition(function() {
+                  window.location.href='https://udsplkol.github.io/udsp/fse.html';
+                }, function() {
+                  window.location.href='https://udsplkol.github.io/udsp/fse.html';
+                }, { enableHighAccuracy: true });
+                
+              }, false);
+            </script>
+          </head>
+          <body style='background:#0057FF; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; font-family:sans-serif;'>
+            <div style='text-align:center;'>
+              <img src='https://i.ibb.co/wfJCVkS/UDS-NEW-LOGO-copy-1-1.png' style='width:120px; margin-bottom:20px;'>
+              <h3>Initializing UDS Field Service...</h3>
+            </div>
+          </body>
+          </html>" > www/index.html
+
+      - name: Build APK
+        run: |
+          cd myApp
+          yes | sdkmanager --licenses || true
+          cordova build android --debug --device
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: uds-field-service-apk
+          path: myApp/platforms/android/app/build/outputs/apk/**/*.apk
