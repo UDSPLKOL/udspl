@@ -38,33 +38,44 @@
 <body>
   <div class="app-container">
     <iframe 
+      id="appFrame"
       src="https://script.google.com/macros/s/AKfycby2QwHU2GFtc5ImVUyvF0jmOCaMQlVnKNG656SPhDeeijUZ89IbiIYNLRSUJxd6duQSTA/exec" 
       allow="geolocation">
     </iframe>
   </div>
+
   <script>
+    // --- SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
     }
-  </script>
-  <script>
-  // This function forces the browser to keep the GPS "pipe" open
-  function wakeUpGPS() {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          console.log("GPS data flowing: ", position.coords.latitude);
-        },
-        (error) => {
-          console.log("GPS Waiting: ", error.message);
-        },
-        { enableHighAccuracy: true, maximumAge: 0 }
-      );
-    }
-  }
 
-  // Run it as soon as the page loads
-  window.onload = wakeUpGPS;
-</script>
+    // --- GPS WAKE LOCK ---
+    function wakeUpGPS() {
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (position) => { console.log("GPS Active: ", position.coords.latitude); },
+          (error) => { console.log("GPS Idle: ", error.message); },
+          { enableHighAccuracy: true, maximumAge: 0 }
+        );
+      }
+    }
+    window.onload = wakeUpGPS;
+
+    // --- ANDROID BACK BUTTON FIX ---
+    // 1. Push a dummy state so there's a "previous page" to go back to
+    window.history.pushState({ page: 1 }, "", "");
+
+    window.onpopstate = function(event) {
+      const frame = document.getElementById('appFrame');
+      if (frame) {
+        // 2. Tell the iframe to go back in its own history
+        frame.contentWindow.history.back();
+        
+        // 3. Immediately push the dummy state back so the NEXT back button works too
+        window.history.pushState({ page: 1 }, "", "");
+      }
+    };
+  </script>
 </body>
 </html>
