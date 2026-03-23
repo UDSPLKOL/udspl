@@ -2,7 +2,7 @@
   "name": "UDS Field Service",
   "short_name": "UDS Field",
   "description": "Ultimate Digital Solutions Field Service Application",
-  "start_url": "https://raw.githubusercontent.com/udsplkol/udsp/main/fse.html",
+  "start_url": "https://udsplkol.github.io/udspl/fse.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
